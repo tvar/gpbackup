@@ -167,12 +167,14 @@ ORDER BY c.oid;`, SchemaFilterClause("n"), oidStr, oidStr, oidStr, childPartitio
  */
 
 type PartitionLevelInfo struct {
-	Oid      uint32
-	Level    string
-	RootName string
+	Oid             uint32
+	Level           string
+	RootName        string
+	PartDef         string
+	PartTemplateDef string
 }
 
-func GetPartitionTableMap(connection *dbconn.DBConn) map[uint32]PartitionLevelInfo {
+func GetPartitionLevelInfo(connection *dbconn.DBConn) []PartitionLevelInfo {
 	query := `
 SELECT
 	pc.oid AS oid,
@@ -205,11 +207,19 @@ WHERE r.parchildrelid != 0;
 	err := connection.Select(&results, query)
 	gplog.FatalOnError(err)
 
+	return results
+}
+
+func GetPartitionTableMap(connection *dbconn.DBConn) map[uint32]PartitionLevelInfo {
 	resultMap := make(map[uint32]PartitionLevelInfo, 0)
-	for _, result := range results {
+	partitionLevelInfo := GetPartitionLevelInfo(connection)
+	partitionDefs := GetPartitionDefinitions(connection)
+	partTemplateDefs := GetPartitionTemplates(connection)
+	for _, result := range partitionLevelInfo {
+		result.PartDef = partitionDefs[result.Oid]
+		result.PartTemplateDef = partTemplateDefs[result.Oid]
 		resultMap[result.Oid] = result
 	}
-
 	return resultMap
 }
 

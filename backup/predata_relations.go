@@ -138,8 +138,6 @@ func ExpandIncludeRelations(tables []Relation) {
 
 type TableDefinition struct {
 	DistPolicy         string
-	PartDef            string
-	PartTemplateDef    string
 	StorageOpts        string
 	TablespaceName     string
 	ColumnDefs         []ColumnDefinition
@@ -164,14 +162,12 @@ func ConstructDefinitionsForTables(connection *dbconn.DBConn, tables []Relation)
 	columnDefs := GetColumnDefinitions(connection, columnMetadata)
 	distributionPolicies := GetDistributionPolicies(connection)
 	gplog.Verbose("Retrieving partition information")
-	partitionDefs := GetPartitionDefinitions(connection)
-	partTemplateDefs := GetPartitionTemplates(connection)
+	partTableMap := GetPartitionTableMap(connection)
 	gplog.Verbose("Retrieving storage information")
 	tableStorageOptions := GetTableStorageOptions(connection)
 	tablespaceNames := GetTablespaceNames(connection)
 	gplog.Verbose("Retrieving external table information")
 	extTableDefs := GetExternalTableDefinitions(connection)
-	partTableMap := GetPartitionTableMap(connection)
 	tableTypeMap := GetTableType(connection)
 	unloggedTableMap := GetUnloggedTables(connection)
 
@@ -180,8 +176,6 @@ func ConstructDefinitionsForTables(connection *dbconn.DBConn, tables []Relation)
 		oid := table.Oid
 		tableDef := TableDefinition{
 			distributionPolicies[oid],
-			partitionDefs[oid],
-			partTemplateDefs[oid],
 			tableStorageOptions[oid],
 			tablespaceNames[oid],
 			columnDefs[oid],
@@ -286,12 +280,12 @@ func PrintRegularTableCreateStatement(metadataFile *utils.FileWithByteCount, toc
 		metadataFile.MustPrintf("TABLESPACE %s ", tableDef.TablespaceName)
 	}
 	metadataFile.MustPrintf("%s", tableDef.DistPolicy)
-	if tableDef.PartDef != "" {
-		metadataFile.MustPrintf(" %s", strings.TrimSpace(tableDef.PartDef))
+	if tableDef.PartitionLevelInfo.PartDef != "" {
+		metadataFile.MustPrintf(" %s", strings.TrimSpace(tableDef.PartitionLevelInfo.PartDef))
 	}
 	metadataFile.MustPrintln(";")
-	if tableDef.PartTemplateDef != "" {
-		metadataFile.MustPrintf("%s;\n", strings.TrimSpace(tableDef.PartTemplateDef))
+	if tableDef.PartitionLevelInfo.PartTemplateDef != "" {
+		metadataFile.MustPrintf("%s;\n", strings.TrimSpace(tableDef.PartitionLevelInfo.PartTemplateDef))
 	}
 	printAlterColumnStatements(metadataFile, table, tableDef.ColumnDefs)
 	if toc != nil {
