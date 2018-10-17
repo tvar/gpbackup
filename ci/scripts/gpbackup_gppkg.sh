@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -ex
 
 # USAGE: ./gpbackup_gppkg.sh [gpbackup version] [gpdb major version] [os]
