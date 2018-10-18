@@ -17,8 +17,8 @@ Backup and restore utilities for Greenplum
 %setup -c -q -T -D -a 0
 
 %install
-mkdir -p \$RPM_BUILD_ROOT%{prefix}/bin
-cp bin/gpbackup bin/gprestore bin/gpbackup_helper \$RPM_BUILD_ROOT%{prefix}/bin
+mkdir -p $RPM_BUILD_ROOT%{prefix}/bin
+cp bin/gpbackup bin/gprestore bin/gpbackup_helper $RPM_BUILD_ROOT%{prefix}/bin
 
 %files
 %{prefix}/bin/gpbackup
