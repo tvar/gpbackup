@@ -11,6 +11,12 @@ resource_types:
     repository: cfcommunity/slack-notification-resource
     tag: latest
 
+    #- name: pivnet
+    #  type: docker-image
+    #  source:
+    #    repository: pivotalcf/pivnet-resource
+    #    tag: latest-final
+
 resources:
 - name: gpbackup
   type: git
@@ -197,6 +203,18 @@ resources:
       # and different teams will place there clusters' tfstate files under different paths
       bucket: gpdb5-pipeline-dynamic-terraform
       bucket_path: clusters-aws/
+
+      #- name: pivnet-gpbackup
+      #  type: pivnet
+      #  source:
+      #    api_token: ((pivnet.api_token))
+      #    product_slug: ((pivnet.product_slug))
+      #    endpoint: ((pivnet.endpoint))
+      #    bucket: ((pivnet.bucket-name))
+      #    access_key_id: ((pivnet.bucket_access_key_id))
+      #    secret_access_key: ((pivnet.bucket_secret_access_key))
+      #    region: ((pivnet.aws_region))
+      #    sort_by: semver
 
 jobs:
 - name: units
@@ -977,6 +995,11 @@ jobs:
         - component_gpbackup/bin/gpbackup
         - component_gpbackup/bin/gprestore
         - component_gpbackup/bin/gpbackup_helper
+          #    - put: pivnet-gpbackup
+          #      params:
+          #        metadata_file: workspace/metadata.yml #TODO
+          #        file_glob: workspace/greenplum-for-kubernetes* #TODO
+          #        s3_filepath_prefix: ((pivnet.s3-filepath-prefix))
 
 
 ccp_default_params_anchor: &ccp_default_params
