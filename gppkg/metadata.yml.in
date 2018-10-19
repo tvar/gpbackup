@@ -1,0 +1,29 @@
+release:
+  version: <VERSION>
+  release_type: <RELEASE_TYPE>
+  eula_slug: <EULA> #TODO
+  description: Backup and Restore utilities for Greenplum
+  availability: Admins Only
+  controlled: false
+  eccn: 5D002
+  license_exception: <TODO>
+
+product_files:
+- file: gpbackup-(.*)-gp4-rhel5-x86_64.gppkg
+  file_type: Software
+  upload_as: Backup and Restore for GPDB4 on RHEL 5
+- file: gpbackup-(.*)-gp4-sles11-x86_64.gppkg
+  file_type: Software
+  upload_as: Backup and Restore for GPDB4 on SLES 11
+- file: gpbackup-(.*)-gp5-rhel6-x86_64.gppkg
+  file_type: Software
+  upload_as: Backup and Restore for GPDB5 on RHEL 6
+- file: gpbackup-(.*)-gp5-rhel7-x86_64.gppkg
+  file_type: Software
+  upload_as: Backup and Restore for GPDB5 on RHEL 7
+- file: gpbackup-(.*)-gp5-sles11-x86_64.gppkg
+  file_type: Software
+  upload_as: Backup and Restore for GPDB5 on SLES 11
+- file: gpbackup-(.*)-gp5-sles12-x86_64.gppkg
+  file_type: Software
+  upload_as: Backup and Restore for GPDB5 on SLES 12
