@@ -17,11 +17,13 @@ import (
  */
 
 func validateFilterListsInBackupSet() {
-	ValidateFilterSchemasInBackupSet(MustGetFlagStringSlice(utils.INCLUDE_SCHEMA))
-	ValidateFilterRelationsInBackupSet(MustGetFlagStringSlice(utils.INCLUDE_RELATION))
+	ValidateFilterSchemasInBackupSet(MustGetFlagStringSlice(utils.INCLUDE_SCHEMA), false)
+	ValidateFilterSchemasInBackupSet(MustGetFlagStringSlice(utils.EXCLUDE_SCHEMA), true)
+	ValidateFilterRelationsInBackupSet(MustGetFlagStringSlice(utils.INCLUDE_RELATION), false)
+	ValidateFilterRelationsInBackupSet(MustGetFlagStringSlice(utils.EXCLUDE_RELATION), true)
 }
 
-func ValidateFilterSchemasInBackupSet(schemaList []string) {
+func ValidateFilterSchemasInBackupSet(schemaList []string, nonFatalExclude bool) {
 	schemaMap := make(map[string]bool, len(schemaList))
 	for _, schema := range schemaList {
 		schemaMap[schema] = true
@@ -56,7 +58,11 @@ func ValidateFilterSchemasInBackupSet(schemaList []string) {
 		keys[i] = k
 		i++
 	}
-	gplog.Fatal(errors.Errorf("Could not find the following schema(s) in the backup set: %s", strings.Join(keys, ", ")), "")
+	if nonFatalExclude {
+		gplog.Warn("Could not find the following excluded schema(s) in the backup set: %s", strings.Join(keys, ", "))
+	} else {
+		gplog.Fatal(errors.Errorf("Could not find the following schema(s) in the backup set: %s", strings.Join(keys, ", ")), "")
+	}
 }
 
 func GenerateRestoreRelationList() []string {
@@ -126,7 +132,7 @@ WHERE quote_ident(n.nspname) || '.' || quote_ident(c.relname) IN (%s)`, quotedTa
 	}
 }
 
-func ValidateFilterRelationsInBackupSet(relationList []string) {
+func ValidateFilterRelationsInBackupSet(relationList []string, nonFatalExclude bool) {
 	if len(relationList) == 0 {
 		return
 	}
@@ -166,7 +172,11 @@ func ValidateFilterRelationsInBackupSet(relationList []string) {
 		keys[i] = k
 		i++
 	}
-	gplog.Fatal(errors.Errorf("Could not find the following relation(s) in the backup set: %s", strings.Join(keys, ", ")), "")
+	if nonFatalExclude {
+		gplog.Warn("Could not find the following excluded relation(s) in the backup set: %s", strings.Join(keys, ", "))
+	} else {
+		gplog.Fatal(errors.Errorf("Could not find the following relation(s) in the backup set: %s", strings.Join(keys, ", ")), "")
+	}
 }
 
 func ValidateDatabaseExistence(unquotedDBName string, createDatabase bool, isFiltered bool) {

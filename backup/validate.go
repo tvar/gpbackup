@@ -15,11 +15,13 @@ import (
  */
 
 func validateFilterLists() {
-	ValidateFilterSchemas(connectionPool, MustGetFlagStringSlice(utils.INCLUDE_SCHEMA))
-	ValidateFilterTables(connectionPool, MustGetFlagStringSlice(utils.INCLUDE_RELATION))
+	ValidateFilterSchemas(connectionPool, MustGetFlagStringSlice(utils.INCLUDE_SCHEMA), false)
+	ValidateFilterSchemas(connectionPool, MustGetFlagStringSlice(utils.EXCLUDE_SCHEMA), true)
+	ValidateFilterTables(connectionPool, MustGetFlagStringSlice(utils.INCLUDE_RELATION), false)
+	ValidateFilterTables(connectionPool, MustGetFlagStringSlice(utils.EXCLUDE_RELATION), true)
 }
 
-func ValidateFilterSchemas(connectionPool *dbconn.DBConn, schemaList []string) {
+func ValidateFilterSchemas(connectionPool *dbconn.DBConn, schemaList []string, nonFatalExclude bool) {
 	if len(schemaList) > 0 {
 		quotedSchemasStr := utils.SliceToQuotedString(schemaList)
 		query := fmt.Sprintf("SELECT nspname AS string FROM pg_namespace WHERE nspname IN (%s)", quotedSchemasStr)
@@ -28,7 +30,9 @@ func ValidateFilterSchemas(connectionPool *dbconn.DBConn, schemaList []string) {
 			schemaSet := utils.NewIncludeSet(resultSchemas)
 			schemaSet.AlwaysMatchesFilter = false
 			for _, schema := range schemaList {
-				if !schemaSet.MatchesFilter(schema) {
+				if !schemaSet.MatchesFilter(schema) && nonFatalExclude {
+					gplog.Warn(`Excluded schema %s does not exist`, schema)
+				} else if !schemaSet.MatchesFilter(schema) {
 					gplog.Fatal(nil, "Schema %s does not exist", schema)
 				}
 			}
@@ -36,7 +40,7 @@ func ValidateFilterSchemas(connectionPool *dbconn.DBConn, schemaList []string) {
 	}
 }
 
-func ValidateFilterTables(connectionPool *dbconn.DBConn, tableList []string) {
+func ValidateFilterTables(connectionPool *dbconn.DBConn, tableList []string, nonFatalExclude bool) {
 	if len(tableList) > 0 {
 		utils.ValidateFQNs(tableList)
 		quotedTablesStr := utils.SliceToQuotedString(tableList)
@@ -61,7 +65,9 @@ WHERE quote_ident(n.nspname) || '.' || quote_ident(c.relname) IN (%s)`, quotedTa
 		partTableMap := GetPartitionTableMap(connectionPool)
 		for _, table := range tableList {
 			tableOid := tableMap[table]
-			if tableOid == 0 {
+			if tableOid == 0 && nonFatalExclude {
+				gplog.Warn("Excluded table %s does not exist", table)
+			} else if tableOid == 0 {
 				gplog.Fatal(nil, "Table %s does not exist", table)
 			}
 			if partTableMap[tableOid].Level == "i" {
